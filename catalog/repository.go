@@ -69,7 +69,7 @@ func (r *elasticRepository) GetProductByID(ctx context.Context,id string) (*Prod
 	return &Product{
 		ID:id,
 		Name:p.Name,
-		Desccription:p.Description,
+		Description:p.Description,
 		Price:p.Price,
 	},err
 }
@@ -131,7 +131,7 @@ func (r *elasticRepository) SearchProducts(ctx context.Context,query string,skip
 		p := productDocument{}
 		if err = json.Unmarshal(*hit.Source,&p);err==nil{
 			products = append(products, Product{
-				ID:hit.id,
+				ID:hit.Id,
 				Name:p.Name,
 				Description:p.Description,
 				Price:p.Price,
