@@ -1,10 +1,64 @@
-
+version: "3.7"
 
 services:
   account:
+    build:
+      context: .
+      dockerfile: ./account/app.dockerfile
+    environment:
+      DATABASE_URL: postgres://samarth:123456@account_db/postgres?sslmode=disable
+    restart: on-failure
+
   catalog:
+    build:
+      context: .
+      dockerfile: ./catalog/app.dockerfile
+    environment:
+      DATABASE_URL: http://catalog_db:9200
+    restart: on-failure
+
   order:
+    build:
+      context: .
+      dockerfile: ./order/app.dockerfile
+    environment:
+      DATABASE_URL: postgres://samarth:123456@order_db/postgres?sslmode=disable
+      ACCOUNT_SERVICE_URL: http://account:8080
+      CATALOG_SERVICE_URL: http://catalog:8080
+    restart: on-failure
+
   graphql:
+    build:
+      context: .
+      dockerfile: ./graphql/app.dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      ACCOUNT_SERVICE_URL: http://account:8080
+      CATALOG_SERVICE_URL: http://catalog:8080
+      ORDER_SERVICE_URL: http://order:8080
+    restart: on-failure
+
   account_db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: samarth
+      POSTGRES_PASSWORD: 123456
+    restart: unless-stopped
+
   catalog_db:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    environment:
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+      discovery.type: single-node
+    restart: unless-stopped  # Add restart policy for consistency
+
   order_db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: samarth
+      POSTGRES_PASSWORD: 123456
+    restart: unless-stopped
+
