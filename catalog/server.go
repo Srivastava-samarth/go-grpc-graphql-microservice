@@ -1,3 +1,4 @@
+//go:generate protoc ./catalog.proto --go_out=plugins=grpc:./pb
 package catalog
 
 import (
@@ -5,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+
 	"go-grpc-graphql-microservice/catalog/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -12,7 +14,6 @@ import (
 
 type grpcServer struct {
 	service Service
-	pb.UnimplementedCatalogServiceServer
 }
 
 func ListenGRPC(s Service, port int) error {
@@ -21,42 +22,39 @@ func ListenGRPC(s Service, port int) error {
 		return err
 	}
 	serv := grpc.NewServer()
-	pb.RegisterCatalogServiceServer(serv, &grpcServer{
-		UnimplementedCatalogServiceServer: pb.UnimplementedCatalogServiceServer{},
-		service:                           s,
-	})
+	pb.RegisterCatalogServiceServer(serv, &grpcServer{s})
 	reflection.Register(serv)
 	return serv.Serve(lis)
 }
 
-func (s *grpcServer) PostProduct(ctx context.Context, r *pb.PostProductRequest) (*pb.PostProductResponse,error){
-	p,err := s.service.PostProduct(ctx,r.Name,r.Description,r.Price)
-	if err!=nil{
+func (s *grpcServer) PostProduct(ctx context.Context, r *pb.PostProductRequest) (*pb.PostProductResponse, error) {
+	p, err := s.service.PostProduct(ctx, r.Name, r.Description, r.Price)
+	if err != nil {
 		log.Println(err)
-		return nil,err
+		return nil, err
 	}
 	return &pb.PostProductResponse{Product: &pb.Product{
-		Id:p.ID,
-		Name:p.Name,
-		Description:p.Description,
-		Price:p.Price,
-	}},nil
+		Id:          p.ID,
+		Name:        p.Name,
+		Description: p.Description,
+		Price:       p.Price,
+	}}, nil
 }
 
-func (s *grpcServer) GetProduct(ctx context.Context,r *pb.GetProductRequest) (*pb.GetProductResponse,error){
-	p,err := s.service.GetProduct(ctx,r.Id)
-	if err!=nil{
+func (s *grpcServer) GetProduct(ctx context.Context, r *pb.GetProductRequest) (*pb.GetProductResponse, error) {
+	p, err := s.service.GetProduct(ctx, r.Id)
+	if err != nil {
 		log.Println(err)
-		return nil,err
+		return nil, err
 	}
 	return &pb.GetProductResponse{
-		Product:&pb.Product{
-			Id:p.ID,
-			Name:p.Name,
-			Description:p.Description,
-			Price:p.Price,
+		Product: &pb.Product{
+			Id:          p.ID,
+			Name:        p.Name,
+			Description: p.Description,
+			Price:       p.Price,
 		},
-	},nil
+	}, nil
 }
 
 func (s *grpcServer) GetProducts(ctx context.Context, r *pb.GetProductsRequest) (*pb.GetProductsResponse, error) {

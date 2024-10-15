@@ -1,33 +1,16 @@
-# Build stage
-FROM golang:1.22-alpine as build
-
-# Install build dependencies
-RUN apk --no-cache add gcc g++ make ca-certificates git
-
-# Set the working directory
-WORKDIR /go-grpc-graphql-microservice
-
-# Copy go.mod and go.sum files
+FROM golang:1.13-alpine3.11 AS build
+RUN apk --no-cache add gcc g++ make ca-certificates
+WORKDIR /go/src/github.com/akhilsharma90/go-graphql-microservice
 COPY go.mod go.sum ./
+COPY vendor vendor
+COPY account account
+COPY catalog catalog
+COPY order order
+COPY graphql graphql
+RUN GO111MODULE=on go build -mod vendor -o /go/bin/app ./graphql
 
-# Copy the entire project
-COPY . .
-
-# Ensure dependencies are downloaded and tidy
-RUN GO111MODULE=on go mod tidy && go mod download
-
-# Build the application
-RUN GO111MODULE=on go build -o /go/bin/app ./graphql
-
-# Final stage
-FROM alpine:3.18
+FROM alpine:3.11
 WORKDIR /usr/bin
-
-# Copy the binary from the build stage
-COPY --from=build /go/bin/app .
-
-# Expose the application port
+COPY --from=build /go/bin .
 EXPOSE 8080
-
-# Command to run the application
 CMD ["app"]

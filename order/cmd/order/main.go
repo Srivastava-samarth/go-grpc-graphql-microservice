@@ -1,9 +1,10 @@
 package main
 
 import (
-	"go-grpc-graphql-microservice/order"
 	"log"
 	"time"
+
+	"go-grpc-graphql-microservice/order"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tinrab/retry"
 )
@@ -16,14 +17,15 @@ type Config struct {
 
 func main() {
 	var cfg Config
-	err := envconfig.Process("",&cfg)
-	if err!=nil{
+	err := envconfig.Process("", &cfg)
+	if err != nil {
 		log.Fatal(err)
 	}
+
 	var r order.Repository
-	retry.ForeverSleep(2*time.Second,func(_ int)(err error){
-		r,err = order.NewPostgresRepository(cfg.DatabaseURL)
-		if err!=nil{
+	retry.ForeverSleep(2*time.Second, func(_ int) (err error) {
+		r, err = order.NewPostgresRepository(cfg.DatabaseURL)
+		if err != nil {
 			log.Println(err)
 		}
 		return
@@ -32,5 +34,5 @@ func main() {
 
 	log.Println("Listening on port 8080...")
 	s := order.NewService(r)
-	log.Fatal(order.ListenGRPC(s,cfg.AccountURL,cfg.CatalogURL,8080))
+	log.Fatal(order.ListenGRPC(s, cfg.AccountURL, cfg.CatalogURL, 8080))
 }

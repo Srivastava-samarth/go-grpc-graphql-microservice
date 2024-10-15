@@ -2,54 +2,56 @@ package order
 
 import (
 	"context"
-	"go-grpc-graphql-microservice/order/pb"
 	"log"
 	"time"
 
+	"go-grpc-graphql-microservice/order/pb"
 	"google.golang.org/grpc"
 )
 
 type Client struct {
-	conn *grpc.ClientConn
+	conn    *grpc.ClientConn
 	service pb.OrderServiceClient
 }
 
-func NewClient(url string) (*Client,error){
-	conn,err := grpc.Dial(url,grpc.WithInsecure())
-	if err!=nil{
-		return nil,err
+func NewClient(url string) (*Client, error) {
+	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
 	}
 	c := pb.NewOrderServiceClient(conn)
-	return &Client{conn,c},nil
+	return &Client{conn, c}, nil
 }
 
-func (c *Client) Close(){
+func (c *Client) Close() {
 	c.conn.Close()
 }
 
 func (c *Client) PostOrder(
 	ctx context.Context,
 	accountID string,
-	products []OrderedProduct) (*Order,error){
-		protoProducts := []*pb.PostOrderRequest_OrderProduct{}
-		for _,p := range products{
-			protoProducts = append(protoProducts, &pb.PostOrderRequest_OrderProduct{
-				ProductId: p.ID,
-				Quantity: p.Quantity,
-			})
-		}
-		r,err := c.service.PostOrder(
-			ctx,
-			&pb.PostOrderRequest{
-				AccountId: accountID,
-				Products: protoProducts,
-			},
-		)
-		if err!=nil{
-			return nil,err
-		}
-		//create response order
-		newOrder := r.Order
+	products []OrderedProduct,
+) (*Order, error) {
+	protoProducts := []*pb.PostOrderRequest_OrderProduct{}
+	for _, p := range products {
+		protoProducts = append(protoProducts, &pb.PostOrderRequest_OrderProduct{
+			ProductId: p.ID,
+			Quantity:  p.Quantity,
+		})
+	}
+	r, err := c.service.PostOrder(
+		ctx,
+		&pb.PostOrderRequest{
+			AccountId: accountID,
+			Products:  protoProducts,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create response order
+	newOrder := r.Order
 	newOrderCreatedAt := time.Time{}
 	newOrderCreatedAt.UnmarshalBinary(newOrder.CreatedAt)
 
@@ -62,17 +64,18 @@ func (c *Client) PostOrder(
 	}, nil
 }
 
-func (c *Client) GetOrdersForAccount(ctx context.Context,accountID string) ([]Order,error){
-	r,err := c.service.GetOrdersForAccount(ctx,&pb.GetOrdersForAccountRequest{
+func (c *Client) GetOrdersForAccount(ctx context.Context, accountID string) ([]Order, error) {
+	r, err := c.service.GetOrdersForAccount(ctx, &pb.GetOrdersForAccountRequest{
 		AccountId: accountID,
 	})
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
-		return nil,err
+		return nil, err
 	}
-	//create response orders
+
+	// Create response orders
 	orders := []Order{}
-	for _,orderProto := range r.Orders{
+	for _, orderProto := range r.Orders {
 		newOrder := Order{
 			ID:         orderProto.Id,
 			TotalPrice: orderProto.TotalPrice,
@@ -80,8 +83,9 @@ func (c *Client) GetOrdersForAccount(ctx context.Context,accountID string) ([]Or
 		}
 		newOrder.CreatedAt = time.Time{}
 		newOrder.CreatedAt.UnmarshalBinary(orderProto.CreatedAt)
+
 		products := []OrderedProduct{}
-		for _,p := range orderProto.Products{
+		for _, p := range orderProto.Products {
 			products = append(products, OrderedProduct{
 				ID:          p.Id,
 				Quantity:    p.Quantity,
@@ -91,7 +95,8 @@ func (c *Client) GetOrdersForAccount(ctx context.Context,accountID string) ([]Or
 			})
 		}
 		newOrder.Products = products
+
 		orders = append(orders, newOrder)
 	}
-	return orders,nil
+	return orders, nil
 }

@@ -1,22 +1,19 @@
+//go:generate protoc ./account.proto --go_out=plugins=grpc:./pb
 package account
 
 import (
 	"context"
 	"fmt"
-	"go-grpc-graphql-microservice/account/pb"
-	// "go-grpc-graphql-microservice/account/pb/go-grpc-graphql-microservice/account/pb"
 	"net"
 
-	// "go-grpc-graphql-microservice/account/pb"
+	"go-grpc-graphql-microservice/account/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type grpcServer struct {
 	service Service
-	pb.UnimplementedAccountServiceServer
 }
-
 
 func ListenGRPC(s Service, port int) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -24,10 +21,7 @@ func ListenGRPC(s Service, port int) error {
 		return err
 	}
 	serv := grpc.NewServer()
-	pb.RegisterAccountServiceServer(serv, &grpcServer{
-		UnimplementedAccountServiceServer: pb.UnimplementedAccountServiceServer{},
-		service: s,
-	})
+	pb.RegisterAccountServiceServer(serv, &grpcServer{s})
 	reflection.Register(serv)
 	return serv.Serve(lis)
 }
@@ -63,7 +57,8 @@ func (s *grpcServer) GetAccounts(ctx context.Context, r *pb.GetAccountsRequest) 
 	}
 	accounts := []*pb.Account{}
 	for _, p := range res {
-		accounts = append(accounts,
+		accounts = append(
+			accounts,
 			&pb.Account{
 				Id:   p.ID,
 				Name: p.Name,

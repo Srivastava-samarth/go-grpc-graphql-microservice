@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"go-grpc-graphql-microservice/order"
 	"log"
 	"time"
-)
 
-// import "context"
+	"go-grpc-graphql-microservice/order"
+)
 
 var (
 	ErrInvalidParameter = errors.New("invalid parameter")

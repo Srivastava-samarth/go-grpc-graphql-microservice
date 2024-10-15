@@ -11,24 +11,25 @@ type accountResolver struct {
 }
 
 func (r *accountResolver) Orders(ctx context.Context, obj *Account) ([]*Order, error) {
-	ctx,cancel := context.WithTimeout(ctx,3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	orderList,err := r.server.orderClient.GetOrdersForAccount(ctx,obj.ID)
-	if err!=nil{
+	orderList, err := r.server.orderClient.GetOrdersForAccount(ctx, obj.ID)
+	if err != nil {
 		log.Println(err)
-		return nil,err
+		return nil, err
 	}
+
 	var orders []*Order
-	for _,o := range orderList{
+	for _, o := range orderList {
 		var products []*OrderedProduct
-		for _,p := range o.Products{
+		for _, p := range o.Products {
 			products = append(products, &OrderedProduct{
-				ID: p.ID,
-				Name:p.Name,
+				ID:          p.ID,
+				Name:        p.Name,
 				Description: p.Description,
-				Price: p.Price,
-				Quantity: int(p.Quantity),
+				Price:       p.Price,
+				Quantity:    int(p.Quantity),
 			})
 		}
 		orders = append(orders, &Order{
@@ -38,5 +39,6 @@ func (r *accountResolver) Orders(ctx context.Context, obj *Account) ([]*Order, e
 			Products:   products,
 		})
 	}
-	return orders,nil
+
+	return orders, nil
 }
