@@ -41,8 +41,8 @@ Each service has its own database:
 
 - Clone the repository:
    ```
-   git clone <repository-url>
-   cd <project-directory>
+   git clone https://github.com/Srivastava-samarth/go-grpc-graphql-microservice.git
+   cd go-grpc-graphql-microservices
    ```
 
 - Start the services using Docker Compose:
